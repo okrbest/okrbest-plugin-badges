@@ -9,6 +9,8 @@ import React from 'react';
 
 import {getUser} from 'mattermost-redux/selectors/entities/users';
 
+import IntlProviderWrapper from '../intl_provider_wrapper';
+
 import {GlobalState} from 'mattermost-redux/types/store';
 
 import {getCustomEmojiByName, getCustomEmojisByName} from 'mattermost-redux/actions/emojis';
@@ -23,7 +25,7 @@ import UserBadges from './user_badges';
 import BadgeDetailsComponent from './badge_details';
 import AllBadges from './all_badges';
 
-const RHS: React.FC = () => {
+const RHSContent: React.FC = () => {
     const dispatch = useDispatch();
     const currentView = useSelector(getRHSView);
     const currentBadge = useSelector(getRHSBadge);
@@ -81,5 +83,11 @@ const RHS: React.FC = () => {
         );
     }
 };
+
+const RHS: React.FC = () => (
+    <IntlProviderWrapper>
+        <RHSContent/>
+    </IntlProviderWrapper>
+);
 
 export default RHS;

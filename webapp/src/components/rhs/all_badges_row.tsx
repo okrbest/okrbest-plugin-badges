@@ -1,5 +1,7 @@
 import React from 'react';
 
+import {useIntl} from 'react-intl';
+
 import {AllBadgesBadge} from '../../types/badges';
 import BadgeImage from '../utils/badge_image';
 import {markdown} from 'utils/markdown';
@@ -11,18 +13,18 @@ type Props = {
     onClick: (badge: AllBadgesBadge) => void;
 }
 
-function getGrantedText(badge: AllBadgesBadge): string {
-    if (badge.granted === 0) {
-        return 'Not yet granted.';
-    }
-    if (badge.multiple) {
-        return `Granted ${badge.granted_times} to ${badge.granted} users.`;
-    }
-
-    return `Granted to ${badge.granted} users.`;
-}
-
 const AllBadgesRow: React.FC<Props> = ({badge, onClick}: Props) => {
+    const intl = useIntl();
+
+    let grantedText: string;
+    if (badge.granted === 0) {
+        grantedText = intl.formatMessage({id: 'AllBadgesRow.notGranted', defaultMessage: 'Not yet granted.'});
+    } else if (badge.multiple) {
+        grantedText = intl.formatMessage({id: 'AllBadgesRow.grantedMultiple', defaultMessage: 'Granted {grantedTimes} to {granted} users.'}, {grantedTimes: badge.granted_times, granted: badge.granted});
+    } else {
+        grantedText = intl.formatMessage({id: 'AllBadgesRow.granted', defaultMessage: 'Granted to {granted} users.'}, {granted: badge.granted});
+    }
+
     return (
         <div className='AllBadgesRow'>
             <a
@@ -39,8 +41,8 @@ const AllBadgesRow: React.FC<Props> = ({badge, onClick}: Props) => {
             <div>
                 <div className='badge-name'>{badge.name}</div>
                 <div className='badge-description'>{markdown(badge.description)}</div>
-                <div className='badge-type'>{'Type: ' + badge.type_name}</div>
-                <div className='granted-by'>{getGrantedText(badge)}</div>
+                <div className='badge-type'>{intl.formatMessage({id: 'AllBadgesRow.type', defaultMessage: 'Type: {typeName}'}, {typeName: badge.type_name})}</div>
+                <div className='granted-by'>{grantedText}</div>
             </div>
         </div>
     );
