@@ -3,6 +3,8 @@ import React from 'react';
 import {UserProfile} from 'mattermost-redux/types/users';
 import {systemEmojis} from 'mattermost-redux/actions/emojis';
 
+import {injectIntl, IntlShape} from 'react-intl';
+
 import {BadgeID, UserBadge} from '../../types/badges';
 import Client from '../../client/api';
 
@@ -15,6 +17,7 @@ import RHSScrollbars from './rhs_scrollbars';
 import './user_badges.scss';
 
 type Props = {
+    intl: IntlShape;
     isCurrentUser: boolean;
     user: UserProfile | null;
     actions: {
@@ -83,16 +86,18 @@ class UserBadges extends React.PureComponent<Props, State> {
     }
 
     render() {
+        const {intl} = this.props;
+
         if (!this.props.user) {
-            return (<div>{'User not found.'}</div>);
+            return (<div>{intl.formatMessage({id: 'UserBadges.notFound', defaultMessage: 'User not found.'})}</div>);
         }
 
         if (this.state.loading) {
-            return (<div>{'Loading...'}</div>);
+            return (<div>{intl.formatMessage({id: 'Common.loading', defaultMessage: 'Loading...'})}</div>);
         }
 
         if (!this.state.badges || this.state.badges.length === 0) {
-            return (<div>{'No badges yet.'}</div>);
+            return (<div>{intl.formatMessage({id: 'UserBadges.noBadges', defaultMessage: 'No badges yet.'})}</div>);
         }
 
         const content = this.state.badges.map((badge) => {
@@ -106,9 +111,9 @@ class UserBadges extends React.PureComponent<Props, State> {
             );
         });
 
-        let title = 'My badges';
+        let title = intl.formatMessage({id: 'UserBadges.myBadges', defaultMessage: 'My badges'});
         if (!this.props.isCurrentUser) {
-            title = `@${this.props.user.username}'s badges`;
+            title = intl.formatMessage({id: 'UserBadges.userBadges', defaultMessage: "@{username}'s badges"}, {username: this.props.user.username});
         }
         return (
             <div className='UserBadges'>
@@ -119,4 +124,4 @@ class UserBadges extends React.PureComponent<Props, State> {
     }
 }
 
-export default UserBadges;
+export default injectIntl(UserBadges);

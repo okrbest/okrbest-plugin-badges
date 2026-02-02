@@ -2,6 +2,8 @@ import React from 'react';
 
 import Client4 from 'mattermost-redux/client/client4';
 
+import {useIntl} from 'react-intl';
+
 import {UserBadge} from '../../types/badges';
 import BadgeImage from '../utils/badge_image';
 import {markdown} from 'utils/markdown';
@@ -15,10 +17,11 @@ type Props = {
 }
 
 const UserBadgeRow: React.FC<Props> = ({badge, onClick, isCurrentUser}: Props) => {
+    const intl = useIntl();
     const time = new Date(badge.time);
     let reason = null;
     if (badge.reason) {
-        reason = (<div className='badge-user-reason'>{'Why? ' + badge.reason}</div>);
+        reason = (<div className='badge-user-reason'>{intl.formatMessage({id: 'UserBadgeRow.reason', defaultMessage: 'Why? {reason}'}, {reason: badge.reason})}</div>);
     }
     let setStatus = null;
     if (isCurrentUser && badge.image_type === 'emoji') {
@@ -30,7 +33,7 @@ const UserBadgeRow: React.FC<Props> = ({badge, onClick, isCurrentUser}: Props) =
                         c.updateCustomStatus({emoji: badge.image, text: badge.name});
                     }}
                 >
-                    {'Set status to this badge'}
+                    {intl.formatMessage({id: 'UserBadgeRow.setStatus', defaultMessage: 'Set status to this badge'})}
                 </a>
             </div>
         );
@@ -49,9 +52,9 @@ const UserBadgeRow: React.FC<Props> = ({badge, onClick, isCurrentUser}: Props) =
                 <div className='user-badge-name'>{badge.name}</div>
                 <div className='user-badge-description'>{markdown(badge.description)}</div>
                 {reason}
-                <div className='user-badge-type'>{'Type: ' + badge.type_name}</div>
-                <div className='user-badge-granted-by'>{`Granted by: ${badge.granted_by_name}`}</div>
-                <div className='user-badge-granted-at'>{`Granted at: ${time.toDateString()}`}</div>
+                <div className='user-badge-type'>{intl.formatMessage({id: 'UserBadgeRow.type', defaultMessage: 'Type: {typeName}'}, {typeName: badge.type_name})}</div>
+                <div className='user-badge-granted-by'>{intl.formatMessage({id: 'UserBadgeRow.grantedBy', defaultMessage: 'Granted by: {username}'}, {username: badge.granted_by_name})}</div>
+                <div className='user-badge-granted-at'>{intl.formatMessage({id: 'UserBadgeRow.grantedAt', defaultMessage: 'Granted at: {date}'}, {date: intl.formatDate(time, {year: 'numeric', month: 'long', day: 'numeric'})})}</div>
                 {setStatus}
             </div>
         </div>

@@ -7,6 +7,8 @@ import {GlobalState} from 'mattermost-redux/types/store';
 
 import {systemEmojis} from 'mattermost-redux/actions/emojis';
 
+import {injectIntl, IntlShape} from 'react-intl';
+
 import {BadgeID, UserBadge} from 'types/badges';
 import Client from 'client/api';
 import BadgeImage from '../utils/badge_image';
@@ -17,6 +19,7 @@ import {markdown} from 'utils/markdown';
 import './badge_list.scss';
 
 type Props = {
+    intl: IntlShape;
     debug: GlobalState;
     user: UserProfile;
     currentUserID: string;
@@ -104,6 +107,7 @@ class BadgeList extends React.PureComponent<Props, State> {
     }
 
     render() {
+        const {intl} = this.props;
         const nBadges = this.state.badges?.length || 0;
         const toShow = nBadges < MAX_BADGES ? nBadges : MAX_BADGES;
 
@@ -113,7 +117,7 @@ class BadgeList extends React.PureComponent<Props, State> {
             const time = new Date(badge.time);
             let reason = null;
             if (badge.reason) {
-                reason = (<div>{'Why? ' + badge.reason}</div>);
+                reason = (<div>{intl.formatMessage({id: 'BadgeList.reason', defaultMessage: 'Why? {reason}'}, {reason: badge.reason})}</div>);
             }
             const badgeComponent = (
                 <OverlayTrigger
@@ -121,8 +125,8 @@ class BadgeList extends React.PureComponent<Props, State> {
                         <div>{badge.name}</div>
                         <div>{markdown(badge.description)}</div>
                         {reason}
-                        <div>{`Granted by: ${badge.granted_by_name}`}</div>
-                        <div>{`Granted at: ${time.toDateString()}`}</div>
+                        <div>{intl.formatMessage({id: 'BadgeList.grantedBy', defaultMessage: 'Granted by: {username}'}, {username: badge.granted_by_name})}</div>
+                        <div>{intl.formatMessage({id: 'BadgeList.grantedAt', defaultMessage: 'Granted at: {date}'}, {date: intl.formatDate(time, {year: 'numeric', month: 'long', day: 'numeric'})})}</div>
                     </Tooltip>}
                 >
                     <span>
@@ -142,7 +146,7 @@ class BadgeList extends React.PureComponent<Props, State> {
             andMore = (
                 <OverlayTrigger
                     overlay={<Tooltip id='badgeMoreTooltip'>
-                        {`and ${nBadges - MAX_BADGES} more. Click to see all.`}
+                        {intl.formatMessage({id: 'BadgeList.andMore', defaultMessage: 'and {count} more. Click to see all.'}, {count: nBadges - MAX_BADGES})}
                     </Tooltip>}
                 >
                     <button
@@ -161,13 +165,13 @@ class BadgeList extends React.PureComponent<Props, State> {
 
                 // Reserve enough height one row of badges and the "and more" button
                 <div style={{height: BADGE_SIZE, minWidth: 66, maxWidth}}>
-                    {'Loading...'}
+                    {intl.formatMessage({id: 'Common.loading', defaultMessage: 'Loading...'})}
                 </div>
             );
         }
         return (
             <div id='badgePlugin'>
-                <div><b>{'Badges'}</b></div>
+                <div><b>{intl.formatMessage({id: 'BadgeList.title', defaultMessage: 'Badges'})}</b></div>
                 <div id='contentContainer' >
                     {content}
                     {andMore}
@@ -178,7 +182,7 @@ class BadgeList extends React.PureComponent<Props, State> {
                     onClick={this.onGrantClick}
                 >
                     <span className={'fa fa-plus-circle'}/>
-                    {'Grant badge'}
+                    {intl.formatMessage({id: 'BadgeList.grantBadge', defaultMessage: 'Grant badge'})}
                 </button>
                 <hr className='divider divider--expanded'/>
             </div>
@@ -186,4 +190,4 @@ class BadgeList extends React.PureComponent<Props, State> {
     }
 }
 
-export default BadgeList;
+export default injectIntl(BadgeList);

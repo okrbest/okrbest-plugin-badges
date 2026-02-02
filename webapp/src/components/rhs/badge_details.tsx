@@ -2,6 +2,8 @@ import React from 'react';
 
 import {systemEmojis} from 'mattermost-redux/actions/emojis';
 
+import {injectIntl, IntlShape} from 'react-intl';
+
 import {BadgeDetails, BadgeID} from '../../types/badges';
 import Client from '../../client/api';
 
@@ -17,6 +19,7 @@ import UserRow from './user_row';
 import './badge_details.scss';
 
 type Props = {
+    intl: IntlShape;
     badgeID: BadgeID | null;
     currentUserID: string;
     actions: {
@@ -85,17 +88,18 @@ class BadgeDetailsComponent extends React.PureComponent<Props, State> {
     }
 
     render() {
+        const {intl} = this.props;
         const {badge, loading} = this.state;
         if (this.props.badgeID == null) {
-            return (<div>{'Badge not found.'}</div>);
+            return (<div>{intl.formatMessage({id: 'BadgeDetails.notFound', defaultMessage: 'Badge not found.'})}</div>);
         }
 
         if (loading) {
-            return (<div>{'Loading...'}</div>);
+            return (<div>{intl.formatMessage({id: 'Common.loading', defaultMessage: 'Loading...'})}</div>);
         }
 
         if (!badge) {
-            return (<div>{'Badge not found.'}</div>);
+            return (<div>{intl.formatMessage({id: 'BadgeDetails.notFound', defaultMessage: 'Badge not found.'})}</div>);
         }
 
         const content = badge.owners.map((ownership) => {
@@ -109,7 +113,7 @@ class BadgeDetailsComponent extends React.PureComponent<Props, State> {
         });
         return (
             <div className='BadgeDetails'>
-                <div><b>{'Badge Details'}</b></div>
+                <div><b>{intl.formatMessage({id: 'BadgeDetails.title', defaultMessage: 'Badge Details'})}</b></div>
                 <div className='badge-info'>
                     <span className='badge-icon'>
                         <BadgeImage
@@ -120,15 +124,15 @@ class BadgeDetailsComponent extends React.PureComponent<Props, State> {
                     <div className='badge-text'>
                         <div className='badge-name'>{badge.name}</div>
                         <div className='badge-description'>{markdown(badge.description)}</div>
-                        <div className='badge-type'>{'Type: ' + badge.type_name}</div>
-                        <div className='created-by'>{`Created by: ${badge.created_by_username}`}</div>
+                        <div className='badge-type'>{intl.formatMessage({id: 'BadgeDetails.type', defaultMessage: 'Type: {typeName}'}, {typeName: badge.type_name})}</div>
+                        <div className='created-by'>{intl.formatMessage({id: 'BadgeDetails.createdBy', defaultMessage: 'Created by: {username}'}, {username: badge.created_by_username})}</div>
                     </div>
                 </div>
-                <div><b>{'Granted to:'}</b></div>
+                <div><b>{intl.formatMessage({id: 'BadgeDetails.grantedTo', defaultMessage: 'Granted to:'})}</b></div>
                 <RHSScrollbars>{content}</RHSScrollbars>
             </div>
         );
     }
 }
 
-export default BadgeDetailsComponent;
+export default injectIntl(BadgeDetailsComponent);

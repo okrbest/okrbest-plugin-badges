@@ -2,6 +2,8 @@ import React from 'react';
 
 import {systemEmojis} from 'mattermost-redux/actions/emojis';
 
+import {injectIntl, IntlShape} from 'react-intl';
+
 import {BadgeID, AllBadgesBadge} from '../../types/badges';
 import Client from '../../client/api';
 
@@ -14,6 +16,7 @@ import RHSScrollbars from './rhs_scrollbars';
 import './all_badges.scss';
 
 type Props = {
+    intl: IntlShape;
     actions: {
         setRHSView: (view: RHSState) => void;
         setRHSBadge: (badge: BadgeID | null) => void;
@@ -61,12 +64,14 @@ class AllBadges extends React.PureComponent<Props, State> {
     }
 
     render() {
+        const {intl} = this.props;
+
         if (this.state.loading) {
-            return (<div className='AllBadges'>{'Loading...'}</div>);
+            return (<div className='AllBadges'>{intl.formatMessage({id: 'Common.loading', defaultMessage: 'Loading...'})}</div>);
         }
 
         if (!this.state.badges || this.state.badges.length === 0) {
-            return (<div className='AllBadges'>{'No badges yet.'}</div>);
+            return (<div className='AllBadges'>{intl.formatMessage({id: 'AllBadges.noBadges', defaultMessage: 'No badges yet.'})}</div>);
         }
 
         const content = this.state.badges.map((badge) => {
@@ -80,11 +85,11 @@ class AllBadges extends React.PureComponent<Props, State> {
         });
         return (
             <div className='AllBadges'>
-                <div><b>{'All badges'}</b></div>
+                <div><b>{intl.formatMessage({id: 'AllBadges.title', defaultMessage: 'All badges'})}</b></div>
                 <RHSScrollbars>{content}</RHSScrollbars>
             </div>
         );
     }
 }
 
-export default AllBadges;
+export default injectIntl(AllBadges);

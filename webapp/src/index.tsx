@@ -6,11 +6,15 @@ import {GenericAction} from 'mattermost-redux/types/actions';
 
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 
+import {getCurrentUser} from 'mattermost-redux/selectors/entities/users';
+
 import React from 'react';
+
+import {createIntl, createIntlCache} from 'react-intl';
 
 import {openAddSubscription, openCreateBadge, openCreateType, openRemoveSubscription, setRHSView, setShowRHSAction} from 'actions/actions';
 
-import UserBadges from 'components/rhs';
+import RHS from 'components/rhs';
 
 import ChannelHeaderButton from 'components/channel_header_button';
 
@@ -22,26 +26,40 @@ import manifest from './manifest';
 import {PluginRegistry} from './types/mattermost-webapp';
 import BadgeList from './components/user_popover/';
 import {RHS_STATE_ALL} from './constants';
+import {getMessages} from './i18n';
 
 export default class Plugin {
     public async initialize(registry: PluginRegistry, store: Store<GlobalState, GenericAction>) {
+        const state = store.getState();
+        const currentUser = getCurrentUser(state);
+        const locale = (currentUser?.locale || 'ko').split('-')[0];
+
+        const cache = createIntlCache();
+        const intl = createIntl({
+            locale,
+            messages: getMessages(locale),
+        }, cache);
+
         registry.registerReducer(Reducer);
 
         registry.registerPopoverUserAttributesComponent(BadgeList);
 
-        const {showRHSPlugin, toggleRHSPlugin} = registry.registerRightHandSidebarComponent(UserBadges, 'Badges');
+        const {showRHSPlugin, toggleRHSPlugin} = registry.registerRightHandSidebarComponent(
+            RHS,
+            intl.formatMessage({id: 'SidebarRight.title', defaultMessage: 'My Badges'}),
+        );
         store.dispatch(setShowRHSAction(() => store.dispatch(showRHSPlugin)));
 
         const toggleRHS = () => {
             store.dispatch(setRHSView(RHS_STATE_ALL));
             store.dispatch(toggleRHSPlugin);
-        }
+        };
 
         registry.registerChannelHeaderButtonAction(
             <ChannelHeaderButton/>,
             toggleRHS,
-            'Badges',
-            'Open the list of all badges.',
+            intl.formatMessage({id: 'Plugin.channelHeader.badges', defaultMessage: 'Badges'}),
+            intl.formatMessage({id: 'Plugin.channelHeader.tooltip', defaultMessage: 'Open your badges'}),
         );
 
         if (registry.registerAppBarComponent) {
@@ -50,19 +68,19 @@ export default class Plugin {
             registry.registerAppBarComponent(
                 iconURL,
                 toggleRHS,
-                'Open the list of all badges.',
+                intl.formatMessage({id: 'Plugin.appBar.tooltip', defaultMessage: 'Open your badges'}),
             );
         }
 
         registry.registerMainMenuAction(
-            'Create badge',
+            intl.formatMessage({id: 'Menu.createBadge', defaultMessage: 'Create badge'}),
             () => {
                 store.dispatch(openCreateBadge() as any);
             },
             null,
         );
         registry.registerMainMenuAction(
-            'Create badge type',
+            intl.formatMessage({id: 'Menu.createBadgeType', defaultMessage: 'Create badge type'}),
             () => {
                 store.dispatch(openCreateType() as any);
             },
@@ -70,13 +88,13 @@ export default class Plugin {
         );
 
         registry.registerChannelHeaderMenuAction(
-            'Add badge subscription',
+            intl.formatMessage({id: 'Menu.addSubscription', defaultMessage: 'Add badge subscription'}),
             () => {
                 store.dispatch(openAddSubscription() as any);
             },
         );
         registry.registerChannelHeaderMenuAction(
-            'Remove badge subscription',
+            intl.formatMessage({id: 'Menu.removeSubscription', defaultMessage: 'Remove badge subscription'}),
             () => {
                 store.dispatch(openRemoveSubscription() as any);
             },
