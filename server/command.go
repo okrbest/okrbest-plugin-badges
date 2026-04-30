@@ -6,8 +6,8 @@ import (
 
 	"github.com/larkox/mattermost-plugin-badges/badgesmodel"
 	commandparser "github.com/larkox/mattermost-plugin-badges/server/command_parser"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/spf13/pflag"
 )
 

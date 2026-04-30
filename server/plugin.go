@@ -5,42 +5,37 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
-	pluginapi "github.com/mattermost/mattermost-plugin-api"
-	"github.com/mattermost/mattermost-server/v5/model"
-	"github.com/mattermost/mattermost-server/v5/plugin"
+	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin"
+	"github.com/mattermost/mattermost/server/public/pluginapi"
+	"github.com/mattermost/mattermost/server/public/pluginapi/cluster"
 	"github.com/pkg/errors"
+
+	"github.com/larkox/mattermost-plugin-badges/server/sqlstore"
 )
 
-// Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
 type Plugin struct {
 	plugin.MattermostPlugin
 
-	// configurationLock synchronizes access to the configuration.
 	configurationLock sync.RWMutex
-
-	// configuration is the active plugin configuration. Consult getConfiguration and
-	// setConfiguration for usage.
-	configuration *configuration
+	configuration     *configuration
 
 	mm               *pluginapi.Client
 	BotUserID        string
 	store            Store
+	sqlStore         *sqlstore.SQLStore
 	router           *mux.Router
 	badgeAdminUserID string
 }
 
-// ServeHTTP demonstrates a plugin that handles HTTP requests by greeting the world.
-func (p *Plugin) ServeHTTP(c *plugin.Context, w http.ResponseWriter, r *http.Request) {
-	r.Header.Add("Mattermost-Plugin-ID", c.SourcePluginId)
+func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
 	p.router.ServeHTTP(w, r)
 }
 
-// See https://developers.mattermost.com/extend/plugins/server/reference/
 func (p *Plugin) OnActivate() error {
-	p.mm = pluginapi.NewClient(p.API)
-	botID, err := p.Helpers.EnsureBot(&model.Bot{
+	p.mm = pluginapi.NewClient(p.API, p.Driver)
+	botID, err := p.mm.Bot.EnsureBot(&model.Bot{
 		Username:    "badges",
 		DisplayName: "Badges Bot",
 		Description: "Created by the Badges plugin.",
@@ -49,7 +44,34 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrap(err, "failed to ensure badges bot")
 	}
 	p.BotUserID = botID
-	p.store = NewStore(p.API)
+
+	apiClient := sqlstore.NewClient(p.mm, p.API)
+	sqlStore, err := sqlstore.New(apiClient)
+	if err != nil {
+		return errors.Wrap(err, "failed creating the SQL store")
+	}
+	p.sqlStore = sqlStore
+
+	mutex, err := cluster.NewMutex(p.API, "Badges_dbMutex")
+	if err != nil {
+		return errors.Wrap(err, "failed creating cluster mutex")
+	}
+	if err := func() error {
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		if err := sqlStore.RunMigrations(); err != nil {
+			return errors.Wrap(err, "failed to run migrations")
+		}
+		if err := sqlStore.MigrateFromKV(p.API); err != nil {
+			p.API.LogWarn("KV to DB migration encountered an error", "error", err.Error())
+		}
+		return nil
+	}(); err != nil {
+		return err
+	}
+
+	p.store = NewSQLStoreAdapter(sqlStore, p.API)
 	p.initializeAPI()
 
 	return p.mm.SlashCommand.Register(p.getCommand())

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/larkox/mattermost-plugin-badges/badgesmodel"
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 )
 
 func areRolesAllowed(userRoles []string, allowedRoles map[string]bool) bool {
@@ -189,7 +189,7 @@ func (p *Plugin) notifyGrant(badgeID badgesmodel.BadgeID, granter string, grante
 			}
 		}
 		if inChannel {
-			if !p.API.HasPermissionToChannel(granter, channelID, model.PERMISSION_CREATE_POST) {
+			if !p.API.HasPermissionToChannel(granter, channelID, model.PermissionCreatePost) {
 				p.mm.Post.SendEphemeralPost(granter, &model.Post{Message: "You don't have permissions to notify the grant on this channel.", ChannelId: channelID})
 			} else {
 				post := basePost.Clone()
