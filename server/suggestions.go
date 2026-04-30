@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/larkox/mattermost-plugin-badges/badgesmodel"
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 )
 
 func (p *Plugin) filterGrantBadges(user *model.User) ([]*badgesmodel.Badge, error) {

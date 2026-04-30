@@ -10,6 +10,7 @@ const (
 
 	PluginPath          = "/com.mattermost.badges"
 	PluginAPIPath       = "/papi/v1"
-	PluginAPIPathEnsure = "/ensure"
-	PluginAPIPathGrant  = "/grant"
+	PluginAPIPathEnsure     = "/ensure"
+	PluginAPIPathGrant      = "/grant"
+	PluginAPIPathBadgeCount = "/badge-count"
 )

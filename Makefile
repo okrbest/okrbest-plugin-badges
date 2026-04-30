@@ -78,7 +78,7 @@ endif
 ## Ensures NPM dependencies are installed without having to run this all the time.
 webapp/node_modules: $(wildcard webapp/package.json)
 ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) install
+	cd webapp && NODE_OPTIONS=--openssl-legacy-provider $(NPM) install --legacy-peer-deps --ignore-scripts
 	touch $@
 endif
 
@@ -87,9 +87,9 @@ endif
 webapp: webapp/node_modules
 ifneq ($(HAS_WEBAPP),)
 ifeq ($(MM_DEBUG),)
-	cd webapp && $(NPM) run build;
+	cd webapp && NODE_OPTIONS=--openssl-legacy-provider $(NPM) run build;
 else
-	cd webapp && $(NPM) run debug;
+	cd webapp && NODE_OPTIONS=--openssl-legacy-provider $(NPM) run debug;
 endif
 endif
 

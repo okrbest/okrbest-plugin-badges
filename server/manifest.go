@@ -3,9 +3,9 @@
 package main
 
 import (
-	"strings"
+	"encoding/json"
 
-	"github.com/mattermost/mattermost-server/v5/model"
+	"github.com/mattermost/mattermost/server/public/model"
 )
 
 var manifest *model.Manifest
@@ -23,8 +23,8 @@ const manifestStr = `
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
-      "linux-amd64": "server/dist/plugin-linux-amd64",
       "darwin-amd64": "server/dist/plugin-darwin-amd64",
+      "linux-amd64": "server/dist/plugin-linux-amd64",
       "windows-amd64": "server/dist/plugin-windows-amd64.exe"
     },
     "executable": ""
@@ -42,13 +42,17 @@ const manifestStr = `
         "type": "text",
         "help_text": "This user will be considered as an admin for the badges plugin. They can create types, and modify and grant any badge.",
         "placeholder": "",
-        "default": null
+        "default": null,
+        "hosting": "",
+        "secret": false
       }
-    ]
+    ],
+    "sections": null
   }
 }
 `
 
 func init() {
-	manifest = model.ManifestFromJson(strings.NewReader(manifestStr))
+	manifest = &model.Manifest{}
+	_ = json.Unmarshal([]byte(manifestStr), manifest)
 }
