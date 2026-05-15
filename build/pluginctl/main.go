@@ -90,7 +90,6 @@ func getClient() (*model.Client4, error) {
 	}
 
 	if adminUsername != "" && adminPassword != "" {
-		client := model.NewAPIv4Client(siteURL)
 		log.Printf("Authenticating as %s against %s.", adminUsername, siteURL)
 		_, _, err := client.Login(context.Background(), adminUsername, adminPassword)
 		if err != nil {

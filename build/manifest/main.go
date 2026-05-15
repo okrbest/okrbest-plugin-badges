@@ -28,7 +28,9 @@ const manifestStr = ` + "`" + `
 
 func init() {
 	manifest = &model.Manifest{}
-	_ = json.Unmarshal([]byte(manifestStr), manifest)
+	if err := json.Unmarshal([]byte(manifestStr), manifest); err != nil {
+		panic("failed to unmarshal manifest: " + err.Error())
+	}
 }
 `
 

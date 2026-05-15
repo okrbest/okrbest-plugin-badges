@@ -3,7 +3,6 @@ package sqlstore
 import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/larkox/mattermost-plugin-badges/badgesmodel"
-	"github.com/lib/pq"
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/pkg/errors"
 )
@@ -103,8 +102,7 @@ func (s *SQLStore) NewOwnershipID() string {
 	return model.NewId()
 }
 
-// --- Dashboard aggregation queries ---
-
+// GetBadgeCountByUser is used by the inter-plugin API (/papi/v1/badge-count).
 func (s *SQLStore) GetBadgeCountByUser(userID string, startMs, endMs int64) (int, error) {
 	query := `
 		SELECT COALESCE(COUNT(*), 0)
@@ -118,94 +116,3 @@ func (s *SQLStore) GetBadgeCountByUser(userID string, startMs, endMs int64) (int
 	return count, nil
 }
 
-type GrantedBadgeRow struct {
-	BadgeID   string `db:"badge_id" json:"badge_id"`
-	BadgeName string `db:"badge_name" json:"badge_name"`
-	GrantedBy string `db:"granted_by" json:"granted_by"`
-	GrantedAt int64  `db:"granted_at" json:"granted_at"`
-}
-
-func (s *SQLStore) GetGrantedBadges(userID string, startMs, endMs int64) ([]*GrantedBadgeRow, error) {
-	query := `
-		SELECT o.badge_id, b.name AS badge_name, o.granted_by, o.granted_at
-		FROM badge_ownership o
-		JOIN badges b ON b.id = o.badge_id
-		WHERE o.user_id = $1 AND o.granted_at >= $2 AND o.granted_at <= $3
-		ORDER BY o.granted_at DESC
-	`
-	var rows []*GrantedBadgeRow
-	if err := s.db.Select(&rows, query, userID, startMs, endMs); err != nil {
-		return nil, errors.Wrapf(err, "failed to get granted badges for user %s", userID)
-	}
-	if rows == nil {
-		rows = []*GrantedBadgeRow{}
-	}
-	return rows, nil
-}
-
-type MemberBadgeRow struct {
-	UserID    string `db:"user_id" json:"user_id"`
-	BadgeID   string `db:"badge_id" json:"badge_id"`
-	BadgeName string `db:"badge_name" json:"badge_name"`
-	GrantedAt int64  `db:"granted_at" json:"granted_at"`
-}
-
-func (s *SQLStore) GetRecentMemberBadges(userIDs []string, limit int) ([]*MemberBadgeRow, error) {
-	if len(userIDs) == 0 {
-		return []*MemberBadgeRow{}, nil
-	}
-
-	query := `
-		SELECT sub.user_id, sub.badge_id, sub.badge_name, sub.granted_at FROM (
-			SELECT DISTINCT ON (o.user_id) o.user_id, o.badge_id, b.name AS badge_name, o.granted_at
-			FROM badge_ownership o
-			JOIN badges b ON b.id = o.badge_id
-			WHERE o.user_id = ANY($1)
-			ORDER BY o.user_id, o.granted_at DESC
-		) sub
-		ORDER BY sub.granted_at DESC
-		LIMIT $2
-	`
-	var rows []*MemberBadgeRow
-	if err := s.db.Select(&rows, query, pq.Array(userIDs), limit); err != nil {
-		return nil, errors.Wrap(err, "failed to get recent member badges")
-	}
-	if rows == nil {
-		rows = []*MemberBadgeRow{}
-	}
-	return rows, nil
-}
-
-type BadgePeriodStats struct {
-	TotalCount      int `db:"total_count"`
-	UniqueUserCount int `db:"unique_user_count"`
-}
-
-func (s *SQLStore) GetBadgePeriodStats(startMs, endMs int64) (*BadgePeriodStats, error) {
-	query := `
-		SELECT COUNT(*) AS total_count, COUNT(DISTINCT user_id) AS unique_user_count
-		FROM badge_ownership
-		WHERE granted_at >= $1 AND granted_at <= $2
-	`
-	var stats BadgePeriodStats
-	if err := s.db.Get(&stats, query, startMs, endMs); err != nil {
-		return nil, errors.Wrap(err, "failed to get badge period stats")
-	}
-	return &stats, nil
-}
-
-func (s *SQLStore) GetBadgePeriodStatsForUsers(userIDs []string, startMs, endMs int64) (*BadgePeriodStats, error) {
-	if len(userIDs) == 0 {
-		return &BadgePeriodStats{}, nil
-	}
-	query := `
-		SELECT COUNT(*) AS total_count, COUNT(DISTINCT user_id) AS unique_user_count
-		FROM badge_ownership
-		WHERE user_id = ANY($1) AND granted_at >= $2 AND granted_at <= $3
-	`
-	var stats BadgePeriodStats
-	if err := s.db.Get(&stats, query, pq.Array(userIDs), startMs, endMs); err != nil {
-		return nil, errors.Wrap(err, "failed to get badge period stats for users")
-	}
-	return &stats, nil
-}
